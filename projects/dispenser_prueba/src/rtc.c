@@ -37,7 +37,7 @@
 
 /*==================[inclusions]=============================================*/
 
-//#include "rtc.h"   // <= own header (optional)
+#include "rtc.h"   // <= own header (optional)
 #include "sapi.h"    // <= sAPI header
 #include "board.h"
 /*==================[macros and definitions]=================================*/
@@ -159,41 +159,43 @@ int main(void){
    /* Inicializar UART_USB a 115200 baudios */
    uartConfig( UART_USB, 115200 );
  // Configurar la hora del RTC
+    //bool_t val;
     rtc_t rtc;
-    rtc.sec=00;
-    rtc.min=20;
-    rtc.hour=10;
+    rtc.sec=0;
+    rtc.min=30;
+    rtc.hour=11;
     rtc.mday=28;
-    rtc.wday=04;
-    rtc.month=09;
-    rtc.year=2017;
-    bool_t val = 0;
-    delay_t delay1s;
-    val = rtcConfig( &rtc );
+    rtc.wday=4;
+    rtc.month=9;
+    rtc.year=2017;  
+    //val = 
+    rtcConfig( &rtc );
     delay_t delay1s;
     delayConfig( &delay1s, 1000 );
     delay(2000); // El RTC tarda en setear la hora, por eso el delay
-    val = rtcWrite( &rtc ); //Setea la hora
+   // val = 
+    rtcWrite( &rtc ); //Setea la hora
 
     //Configurar la hora de alarma
     rtc_t rtcAlarm;
-    rtcAlarm.sec=00;
-    rtcAlarm.min=30;
-    rtcAlarm.hour=10;
+    rtcAlarm.sec=0;
+    rtcAlarm.min=31;
+    rtcAlarm.hour=11;
 
    /* ------------- REPETIR POR SIEMPRE ------------- */
    while(1) {
 
-      if( delayRead( &delay1s ) ){
+         delay(1000);
          /* Leer fecha y hora */
-         val = rtcRead( &rtc );
+         //val = 
+         rtcRead( &rtc );
          if(rtc.hour==rtcAlarm.hour && rtc.min==rtcAlarm.min){
             Board_LED_Toggle(LED);
          }
 
          /* Mostrar fecha y hora en formato "DD/MM/YYYY, HH:MM:SS" */
-         showDateAndTime( &rtc );
-      }
+         //showDateAndTime( &rtc );
+      
 
    }
 
