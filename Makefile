@@ -32,7 +32,12 @@
 
 -include project.mk
 
-PROJECT ?= projects/dispenser_prueba
+#PROJECT ?= projects/sensor_ultrasonico
+PROJECT ?= sapi_examples/edu-ciaa-nxp/uart_04_bridge_esp8266
+#PROJECT ?= sapi_examples/edu-ciaa-nxp/rtc_01
+#PROJECT ?= projects/dispenser_prueba
+#PROJECT ?= sapi_examples/edu-ciaa-nxp/uart_03_receive_string
+#PROJECT ?= sapi_examples/edu-ciaa-nxp/adc_dac_01
 TARGET ?= lpc4337_m4
 BOARD ?= edu_ciaa_nxp
 CFLAGS += -Wno-unused-function

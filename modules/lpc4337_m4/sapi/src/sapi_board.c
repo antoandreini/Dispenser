@@ -92,6 +92,14 @@ void boardConfig(void) {
    gpioConfig( DI5, GPIO_INPUT );
    gpioConfig( DI6, GPIO_INPUT );
    gpioConfig( DI7, GPIO_INPUT );
+   
+   
+   gpioConfig( GPIO1 , GPIO_OUTPUT );
+   gpioConfig( GPIO2 , GPIO_INPUT );
+   gpioConfig( GPIO3 , GPIO_OUTPUT );
+   gpioConfig( GPIO4 , GPIO_OUTPUT );
+   gpioConfig( GPIO5 , GPIO_OUTPUT );
+   gpioConfig( GPIO7 , GPIO_OUTPUT );
 
    /* Configuración de pines de salida de la CIAA-NXP */
    gpioConfig( DO0, GPIO_OUTPUT );

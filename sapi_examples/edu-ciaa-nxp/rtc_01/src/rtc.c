@@ -39,6 +39,8 @@
 
 //#include "rtc.h"   // <= own header (optional)
 #include "sapi.h"    // <= sAPI header
+#include "board.h"
+
 
 /*==================[macros and definitions]=================================*/
 
@@ -189,14 +191,15 @@ int main(void){
       delay(1000);
    }
 
-   rtc.year = 2016;
-   rtc.month = 7;
-   rtc.mday = 3;
-   rtc.wday = 1;
-   rtc.hour = 14;
-   rtc.min = 30;
+   rtc.year = 2017;
+   rtc.month = 12;
+   rtc.mday = 11;
+   rtc.wday = 2;
+   rtc.hour = 10;
+   rtc.min = 49;
    rtc.sec= 0;
-
+   int hora = 10;
+   int minuto = 50;
    /* Establecer fecha y hora */
    val = rtcWrite( &rtc );
 
@@ -207,7 +210,11 @@ int main(void){
          /* Leer fecha y hora */
          val = rtcRead( &rtc );
          /* Mostrar fecha y hora en formato "DD/MM/YYYY, HH:MM:SS" */
-         showDateAndTime( &rtc );
+          showDateAndTime( &rtc );
+         /*if (rtc.hour == hora && rtc.min == minuto){
+            gpioWrite(LED1, ON);
+         } */
+         gpioWrite(LED1,rtc.hour == hora && rtc.min == minuto);
       }
 
    }

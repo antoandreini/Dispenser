@@ -37,7 +37,7 @@
 
 /*==================[inclusions]=============================================*/
 
-#include "rtc.h"   // <= own header (optional)
+//#include "rtc.h"   // <= own header (optional)
 #include "sapi.h"    // <= sAPI header
 #include "board.h"
 /*==================[macros and definitions]=================================*/
@@ -160,14 +160,16 @@ int main(void){
    uartConfig( UART_USB, 115200 );
  // Configurar la hora del RTC
     //bool_t val;
+    bool_t val = 0;
+    
     rtc_t rtc;
     rtc.sec=0;
-    rtc.min=30;
+    rtc.min=20;
     rtc.hour=11;
-    rtc.mday=28;
-    rtc.wday=4;
-    rtc.month=9;
-    rtc.year=2017;  
+    rtc.mday=7;
+    rtc.wday=5;
+    rtc.month=12;
+    rtc.year=17;  
     //val = 
     rtcConfig( &rtc );
     delay_t delay1s;
@@ -177,24 +179,71 @@ int main(void){
     rtcWrite( &rtc ); //Setea la hora
 
     //Configurar la hora de alarma
-    rtc_t rtcAlarm;
-    rtcAlarm.sec=0;
-    rtcAlarm.min=31;
-    rtcAlarm.hour=11;
-
+    int min=21;
+    int hour=11;
+    //rtcWrite( &rtcAlarm );
+   //unsigned short int state = 1;
    /* ------------- REPETIR POR SIEMPRE ------------- */
+   
    while(1) {
+     
+   gpioWrite( LED1, ON);
+      if( delayRead( &delay1s ) ){
+        /* Leer fecha y hora */
+        val = rtcRead( &rtc );
+        if(rtc.hour== hour && rtc.min== min){
+          Board_LED_Toggle(LEDB);
+        }
+        /* Mostrar fecha y hora en formato "DD/MM/YYYY, HH:MM:SS" */
+        showDateAndTime( &rtc );
+      }
+         
+        /*  switch (state){        //GPIO8 = enable, GPIO1 = negro, GPIO3 = marron
+                                //GPIO 5 = amarillo, GPIO 7 = naranja
+            case 1:
+               // gpioWrite( GPIO8 , ON );
+                gpioWrite( GPIO1 , OFF );
+                gpioWrite( LED1, ON);
+                gpioWrite( GPIO5 , OFF );
+                gpioWrite( LED3, ON);
+                delay(250);
+                state = 2;
+            break;
 
-         delay(1000);
-         /* Leer fecha y hora */
-         //val = 
-         rtcRead( &rtc );
-         if(rtc.hour==rtcAlarm.hour && rtc.min==rtcAlarm.min){
-            Board_LED_Toggle(LED);
-         }
+            case 2:
+              //  gpioWrite( GPIO8 , ON );
+                gpioWrite( GPIO1 , OFF );
+                gpioWrite(LED1, ON);
+                gpioWrite( GPIO7 , OFF);
+                gpioWrite(LEDB, ON);                
+                delay(250);
+                state = 3;
+            break;
 
+            case 3:
+            //    gpioWrite( GPIO8 , ON );
+                gpioWrite( GPIO3 , OFF );
+                gpioWrite(LED2, ON);
+                gpioWrite( GPIO7, OFF );
+                gpioWrite(LEDB, ON);                
+                delay(250);
+                state = 4;
+            break;
+
+            case 4:
+             //   gpioWrite( GPIO8 , ON);
+                gpioWrite( GPIO3 , OFF);
+                gpioWrite(LED2, ON);                
+                gpioWrite( GPIO5 , OFF);
+                gpioWrite(LED3 , ON);                
+                delay(250);
+                state = 1;
+      } */
+       // gpioWrite( GPIO0 , ON );
+        // delay(500);
+         
          /* Mostrar fecha y hora en formato "DD/MM/YYYY, HH:MM:SS" */
-         //showDateAndTime( &rtc );
+        // showDateAndTime( &rtc );
       
 
    }

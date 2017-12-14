@@ -38,7 +38,12 @@
 # current project
 #-------------------------------------------------------------------------------
 #PROYECTO A COMPILAR
-PROJECT= projects/dispenser_prueba
+PROJECT = sapi_examples/edu-ciaa-nxp/uart_04_bridge_esp8266
+#PROJECT= projects/sensor_ultrasonico
+#PROJECT= projects/dispenser_prueba
+#PROJECT = sapi_examples/edu-ciaa-nxp/gpio_02_blinky
+
+#PROJECT= projects/prueba_motor
 # examples
 
 #PROJECT = examples/blinky

@@ -124,27 +124,37 @@ int main(void){
    uartConfig( UART_USB, BAUD_RATE );
    uartConfig( UART_232, BAUD_RATE );
 
-   uint8_t dato  = 0;
-
+   uint8_t dato  = 0; 
+   uartWriteString( UART_232, "AT+CWMODE=1\r\n" );
+   delay(1000);
+   //uartWriteString( UART_232, "AT+CWLAP\r\n" );
+   uartWriteString( UART_232, "AT+CWJAP=\"CIAA\",\"12345678\"\r\n" );   //Se conecta a la red
+   delay(10000);
+   uartWriteString( UART_232, "AT+CIPSTART=\"TCP\",\"192.168.43.240\",1337\r\n" ); //Se conecta al servidor TCP
+   delay(5000);
+   
+   uartWriteString( UART_232, "AT+CIPSTATUS\r\n" );
    /* ------------- REPETIR POR SIEMPRE ------------- */
    while(1) {
 
       /* Si presionan TEC1 muestro el mensaje de bienvenida */
       if( !gpioRead( TEC1 ) ){
          gpioWrite( LEDB, ON );
-         imprimirMensajeDeBienvenida();
+         uartWriteString( UART_232, "AT+CIPSTATUS\r\n" );
          gpioWrite( LEDB, OFF );
       }
 
       /* Si recibe un byte de la UART_USB lo guardarlo en la variable dato. */
       if( uartReadByte( UART_USB, &dato ) ){
          /* Se reenvía el dato a la UART_232 realizando un puente entre ambas */
+         gpioWrite( LEDB, ON );
          uartWriteByte( UART_232, dato );
       }
 
       /* Si recibe un byte de la UART_232 lo guardarlo en la variable dato. */
       if( uartReadByte( UART_232, &dato ) ){
          /* Se reenvía el dato a la UART_USB realizando un puente entre ambas */
+         gpioWrite( LED2, ON );
          uartWriteByte( UART_USB, dato );
       }
 

@@ -40,8 +40,6 @@
 //#include "blinky.h"   // <= own header (optional)
 #include "sapi.h"       // <= sAPI header
 
-#include "sapi_gpio.h"
-
 /*==================[macros and definitions]=================================*/
 
 /*==================[internal data declaration]==============================*/
@@ -63,57 +61,50 @@ int main(void){
 
    /* Inicializar la placa */
    boardConfig();
-   int state = 1;
+   unsigned short int state = 1;
    /* ------------- REPETIR POR SIEMPRE ------------- */
    while(1) {
-      switch (state){ 
+      /* switch (state){
+            case 1:
+                gpioWrite( GPIO0 , ON );
+                gpioWrite( GPIO1 , OFF );
+                gpioWrite( GPIO3 , OFF );
+                delay(250);
+                state = 1;
+            break;
+
+            case 2:
+                gpioWrite( GPIO0 , ON );
+                gpioWrite( GPIO1 , OFF );
+                gpioWrite( GPIO4 , OFF);
+                delay(250);
+                state = 3;
+            break;
+
+            case 3:
+                gpioWrite( GPIO0 , ON );
+                gpioWrite( GPIO2 , OFF );
+                gpioWrite( GPIO4, OFF );
+                delay(250);
+                state = 4;
+            break;
+
+            case 4:
+                gpioWrite( GPIO0 , ON);
+                gpioWrite( GPIO2 , OFF);
+                gpioWrite( GPIO3 , OFF);
+                delay(250);
+                state = 1;
+      } */
       /* Prendo el led azul */
-      case 1:
-      gpioWrite( LEDB, ON );
+       gpioWrite( GPIO0 , ON );
 
-      gpioWrite( GPIO7 , ON );
-      gpioWrite( GPIO3 , ON );      
-      gpioWrite( GPIO1 , OFF );
-      gpioWrite( GPIO5 , OFF );      
-      delay(100);
-      
+      delay(500);
+
+      /* Apago el led azul 
       gpioWrite( LEDB, OFF );
-     // gpioWrite( GPIO5 , OFF );
-      state = 2;
-      break;
-      case 2:
-      gpioWrite( LED1, ON );
-      gpioWrite( GPIO7 , OFF );
-      gpioWrite( GPIO3 , ON );      
-      gpioWrite( GPIO1 , OFF );
-      gpioWrite( GPIO5 , ON );  
-      delay(100);    
-      
-      gpioWrite( LED1, OFF );
-      state = 3;
-      break;
-      case 3:
-      gpioWrite( LED2, ON );
-      gpioWrite( GPIO7 , OFF );
-      gpioWrite( GPIO3 , OFF );      
-      gpioWrite( GPIO1 , ON );
-      gpioWrite( GPIO5 , ON );  
-      delay(100);
 
-      gpioWrite( LED2, OFF );
-      state = 4;
-      break;
-      case 4:
-      gpioWrite( LED3, ON );
-      gpioWrite( GPIO7 , ON );
-      gpioWrite( GPIO3 , OFF );      
-      gpioWrite( GPIO1 , ON );
-      gpioWrite( GPIO5 , OFF );  
-      delay(100);
-      gpioWrite( LED3, OFF );
-      state = 1;
-      break;
-      }
+      delay(500); */
 
    }
 

@@ -145,7 +145,7 @@ int main(void){
          uartWriteString( UART_USB, ";\r\n" );
 
          /* Escribo la muestra en la Salida AnalogicaAO - DAC */
-         dacWrite( DAC, muestra );
+        // dacWrite( DAC, muestra );
       }
 
       /* delayRead retorna TRUE cuando se cumple el tiempo de retardo */
