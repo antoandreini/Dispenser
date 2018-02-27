@@ -21,6 +21,11 @@ static char uartBuff[10];
 char espResponseBuffer[ ESP01_RX_BUFF_SIZE ];   //Buffer de respuesta del modulo wifi
 uint32_t espResponseBufferSize = ESP01_RX_BUFF_SIZE;
 bool_t retVal;
+/* Configurar la hora de alarma inicial */
+int minAlarma=15;
+int horaAlarma=12; 
+/* Configurar tamaño porcion inicial */
+int porcion = GRANDE;
 
 char* itoa(int value, char* result, int base) {
    // check that the base if valid
@@ -47,35 +52,8 @@ char* itoa(int value, char* result, int base) {
 }
 
 
-/* Enviar fecha y hora en formato "DD/MM/YYYY, HH:MM:SS" */
+/* Enviar fecha y hora en formato " HH:MM:SS" */
 void showDateAndTime( rtc_t * rtc ){
-   /* Conversion de entero a ascii con base decimal */
-   itoa( (int) (rtc->mday), (char*)uartBuff, 10 ); /* 10 significa decimal */
-   /* Envio el dia */
-   if( (rtc->mday)<10 )
-      uartWriteByte( UART_USB, '0' );
-   uartWriteString( UART_USB, uartBuff );
-   uartWriteByte( UART_USB, '/' );
-
-   /* Conversion de entero a ascii con base decimal */
-   itoa( (int) (rtc->month), (char*)uartBuff, 10 ); /* 10 significa decimal */
-   /* Envio el mes */
-   if( (rtc->month)<10 )
-      uartWriteByte( UART_USB, '0' );
-   uartWriteString( UART_USB, uartBuff );
-   uartWriteByte( UART_USB, '/' );
-
-   /* Conversion de entero a ascii con base decimal */
-   itoa( (int) (rtc->year), (char*)uartBuff, 10 ); /* 10 significa decimal */
-   /* Envio el año */
-   if( (rtc->year)<10 )
-      uartWriteByte( UART_USB, '0' );
-   uartWriteString( UART_USB, uartBuff );
-
-
-   uartWriteString( UART_USB, ", ");
-
-
    /* Conversion de entero a ascii con base decimal */
    itoa( (int) (rtc->hour), (char*)uartBuff, 10 ); /* 10 significa decimal */
    /* Envio la hora */
@@ -103,6 +81,75 @@ void showDateAndTime( rtc_t * rtc ){
 
    /* Envio un 'enter' */
    uartWriteString( UART_USB, "\r\n");
+}
+void actualizar_config(int * horaAlarma, int * minAlarma){ 
+  char ch = '|';
+  char *res;
+  res = strchr(espResponseBuffer, ch); //Busca el comienzo del mensaje enviado por el servidor
+  int hora_act = 0;
+  int min_act = 0;
+  int hora_a = 0;
+  int min_a = 0;
+  rtc_t rtc;
+  switch (res[1]){
+    case 'A':    //Actualiza hora actual, hora de alarma y racion
+      hora_act += (res[3] - '0') * 10;
+      hora_act += (res[4] - '0');
+      rtc.hour = hora_act;
+      min_act += (res[6] - '0') * 10;
+      min_act += (res[7] - '0');
+      rtc.min = min_act;
+      rtc.sec = 0;
+      rtcWrite(&rtc);
+      hora_a += (res[9] - '0') * 10;
+      hora_a += (res[10] - '0');
+      *horaAlarma = hora_a;
+      min_a += (res[12]- '0') * 10;
+      min_a += (res[13] - '0');
+      *minAlarma = min_a;
+      if(res[15] == 'g'){
+        porcion = GRANDE;
+      } else if (res[15]== 'p'){
+        porcion = PEQUENIA;
+      }
+    break;
+    case 'B':   //Actualiza hora actual y racion
+      hora_act += (res[3] - '0') * 10;
+      hora_act += (res[4] - '0');
+      rtc.hour = hora_act;
+      min_act += (res[6] - '0') * 10;
+      min_act += (res[7] - '0');
+      rtc.min = min_act;
+      rtc.sec = 0;
+      rtcWrite(&rtc);
+      if(res[9] == 'g'){
+        porcion = GRANDE;
+      } else if (res[9] == 'p'){
+        porcion = PEQUENIA;
+      }
+    break;
+    case 'C':   //Actualiza hora de alarma y racion
+      hora_a += (res[3] - '0') * 10;
+      hora_a += (res[4] - '0');
+      *horaAlarma = hora_a;
+      min_a += (res[6]- '0') * 10;
+      min_a += (res[7] - '0');
+      *minAlarma = min_a;
+      if(res[9] == 'g'){
+        porcion = GRANDE;
+      } else if (res[9] == 'p'){
+        porcion = PEQUENIA;
+      }
+    break;
+    case 'D':     //Actualiza solo la racion
+      if(res[3] == 'g'){
+        porcion = GRANDE;
+      } else if (res[3] == 'p'){
+        porcion = PEQUENIA;
+      }
+    break;
+  }
+  uartWriteString( UART_USB,  res);        
 }
 
 bool_t recipiente_lleno(void){
@@ -170,13 +217,11 @@ bool_t esp01ConnectToServer( char* url, char* port ){
    uartWriteString( UART_232, "\"," );
    uartWriteString( UART_232, port );
    uartWriteString( UART_232, "\r\n" );
-
-   // No poner funciones entre el envio de comando y la espera de respuesta
    retVal = receiveBytesUntilReceiveStringOrTimeoutBlocking(
                UART_232,
                "CONNECT\r\n\r\nOK\r\n", 15,
                espResponseBuffer, &espResponseBufferSize,
-               300
+               500
             );
    if( !retVal ){
       uartWriteString( UART_USB, ">>>>    Error: No se puede conectar al servidor: \"" );
@@ -184,9 +229,32 @@ bool_t esp01ConnectToServer( char* url, char* port ){
       uartWriteString( UART_USB, "\"," );
       uartWriteString( UART_USB, port );
       uartWriteString( UART_USB, "\"!!\r\n" );
+   } else {
+      uartWriteString( UART_USB, espResponseBuffer );
+      esp01CleanRxBuffer();
+      uartWriteString( UART_232, "AT+CIPSEND=9" );
+      uartWriteString( UART_232, "\r\n" );
+      retVal = receiveBytesUntilReceiveStringOrTimeoutBlocking(
+                UART_232,
+                "\r\n\r\nOK\r\n>", 9,
+                espResponseBuffer, &espResponseBufferSize,
+                500
+             );
+      if(retVal){
+        uartWriteString( UART_USB, espResponseBuffer );
+        esp01CleanRxBuffer();
+        uartWriteString( UART_232, "getData\r\n" );
+        retVal = receiveBytesUntilReceiveStringOrTimeoutBlocking(  //Espera hasta que el servidor envie un mensaje, o que pasen 500 milisegundos
+              UART_232,
+              "|||\r\n", 6,
+              espResponseBuffer, &espResponseBufferSize,
+              500
+            );
+        if(retVal){
+          actualizar_config(&horaAlarma, &minAlarma);
+        } 
+     }
    }
-   // Imprimo todo lo recibido
-   uartWriteString( UART_USB, espResponseBuffer );
    return retVal;
 }
 
@@ -281,19 +349,12 @@ int main(void){
    /* Inicializar ADC para censar nivel de agua */
    adcConfig( ADC_ENABLE );
    uint16_t muestra = 0;
-   char ch = '|';
-   char *res;
    bool_t medida = 0;
    bool_t alimentando = 0;
    bool_t recipienteLleno = 0;
    bool_t bombaPrendida = 0;
    bool_t val = 0;
    int state = 1;
-   /* Configurar la hora de alarma inicial */
-   int minAlarma=15;
-   int horaAlarma=12; 
-   /* Configurar tamaño porcion inicial */
-   int porcion = GRANDE;
    /* Estructura RTC */
    rtc_t rtc;
    rtc.sec=0;
@@ -308,9 +369,9 @@ int main(void){
    delay_t delay1s;
    delayConfig( &delay1s, 1000 );
    delay(2000); // El RTC tarda en setear la hora, por eso el delay
-   if(esp01ConnectToWifiAP( "Trabajo Final", "ilcapogutierrez")){   //Conectar a la red wifi y al servidor
+   if(esp01ConnectToWifiAP( "Fibertel WiFi019 2.4GHz", "0141867817")){   //Conectar a la red wifi y al servidor
     delay(1000);
-    esp01ConnectToServer("192.168.0.105", "1337");
+    esp01ConnectToServer("192.168.0.205", "1337");
    }
    /* ------------- REPETIR POR SIEMPRE ------------- */
    while(1) {
@@ -322,77 +383,12 @@ int main(void){
                   100
                 );
         if (retVal){
-          res = strchr(espResponseBuffer, ch); //Busca el comienzo del mensaje enviado por el servidor
-          int hora_act = 0;
-          int min_act = 0;
-          int hora_a = 0;
-          int min_a = 0;
-          switch (res[1]){
-            case 'A':    //Actualiza hora actual, hora de alarma y racion
-              hora_act += (res[3] - '0') * 10;
-              hora_act += (res[4] - '0');
-              rtc.hour = hora_act;
-              min_act += (res[6] - '0') * 10;
-              min_act += (res[7] - '0');
-              rtc.min = min_act;
-              rtc.sec = 0;
-              rtcWrite(&rtc);
-              hora_a += (res[9] - '0') * 10;
-              hora_a += (res[10] - '0');
-              horaAlarma = hora_a;
-              min_a += (res[12]- '0') * 10;
-              min_a += (res[13] - '0');
-              minAlarma = min_a;
-              if(res[15] == 'g'){
-                porcion = GRANDE;
-              } else if (res[15]== 'p'){
-                porcion = PEQUENIA;
-              }
-            break;
-            case 'B':   //Actualiza hora actual y racion
-              hora_act += (res[3] - '0') * 10;
-              hora_act += (res[4] - '0');
-              rtc.hour = hora_act;
-              min_act += (res[6] - '0') * 10;
-              min_act += (res[7] - '0');
-              rtc.min = min_act;
-              rtc.sec = 0;
-              rtcWrite(&rtc);
-              if(res[9] == 'g'){
-                porcion = GRANDE;
-              } else if (res[9] == 'p'){
-                porcion = PEQUENIA;
-              }
-            break;
-            case 'C':   //Actualiza hora de alarma y racion
-              hora_a += (res[3] - '0') * 10;
-              hora_a += (res[4] - '0');
-              horaAlarma = hora_a;
-              min_a += (res[6]- '0') * 10;
-              min_a += (res[7] - '0');
-              minAlarma = min_a;
-              if(res[9] == 'g'){
-                porcion = GRANDE;
-              } else if (res[9] == 'p'){
-                porcion = PEQUENIA;
-              }
-            break;
-            case 'D':     //Actualiza solo la racion
-              if(res[3] == 'g'){
-                porcion = GRANDE;
-              } else if (res[3] == 'p'){
-                porcion = PEQUENIA;
-              }
-            break;
-          }
-          uartWriteString( UART_USB,  res);
-          itoa(horaAlarma, uartBuff, 10 );
-          uartWriteString( UART_USB, uartBuff);
+          actualizar_config(&horaAlarma, &minAlarma);
         }
         val = rtcRead( &rtc );
         if(rtc.sec == 59 && (alimentando == 0)){          //Se mide el nivel de comida una vez por minuto, salvo cuando el motor esta activo
-          medida = recipiente_lleno();
-          if (medida != -1) recipienteLleno = medida;     //Si la funcion devuelve -1, hubo un error en la medicion y no actualiza la variable
+           medida = recipiente_lleno();
+           if (medida != -1) recipienteLleno = medida;     //Si la funcion devuelve -1, hubo un error en la medicion y no actualiza la variable
         }
         if(rtc.hour == horaAlarma && rtc.min == minAlarma){   //Llega la hora de alimentar
           if (rtc.sec < porcion && (recipienteLleno ==0)) {   //Activa el motor si el recipiente no esta lleno, durante la el tiempo establecido por el tamaño de porcion
@@ -434,9 +430,42 @@ int main(void){
               break;
             }
           } else { 
-                  alimentando = 0;
-                  gpioWrite( GPIO0 , OFF );
-                  gpioWrite( LEDB, OFF );
+                gpioWrite( GPIO0 , OFF );  //Driver del motor disabled
+                gpioWrite( LEDB, OFF );
+                if (alimentando == 1){
+                  if (recipienteLleno == 1){
+                    esp01CleanRxBuffer();
+                    uartWriteString( UART_232, "AT+CIPSEND=41" );
+                    uartWriteString( UART_232, "\r\n" );
+                    retVal = receiveBytesUntilReceiveStringOrTimeoutBlocking(
+                              UART_232,
+                              "\r\n\r\nOK\r\n>", 9,
+                              espResponseBuffer, &espResponseBufferSize,
+                              500
+                          );
+                    if(retVal){
+                      uartWriteString( UART_USB, espResponseBuffer );
+                      esp01CleanRxBuffer();
+                      uartWriteString( UART_232, "Recipiente lleno, no se sirvio alimento\r\n" );   
+                      }
+                  } else {
+                    esp01CleanRxBuffer();
+                    uartWriteString( UART_232, "AT+CIPSEND=20" );
+                    uartWriteString( UART_232, "\r\n" );
+                    retVal = receiveBytesUntilReceiveStringOrTimeoutBlocking(
+                              UART_232,
+                              "\r\n\r\nOK\r\n>", 9,
+                              espResponseBuffer, &espResponseBufferSize,
+                              500
+                          );
+                    if(retVal){
+                      uartWriteString( UART_USB, espResponseBuffer );
+                      esp01CleanRxBuffer();
+                      uartWriteString( UART_232, "Se sirvio alimento\r\n" );   
+                      }
+                  }
+                }
+                alimentando = 0;
           }
       }
       muestra = adcRead( CH1 );   //Toma una muestra del sensor de nivel de agua
@@ -453,6 +482,20 @@ int main(void){
         gpioWrite (GPIO7 , OFF);   
         gpioWrite (GPIO5 , OFF);
         gpioWrite( LED1 , OFF);
+        esp01CleanRxBuffer();
+        uartWriteString( UART_232, "AT+CIPSEND=32" );
+        uartWriteString( UART_232, "\r\n" );
+        retVal = receiveBytesUntilReceiveStringOrTimeoutBlocking(
+                  UART_232,
+                  "\r\n\r\nOK\r\n>", 9,
+                  espResponseBuffer, &espResponseBufferSize,
+                  500
+              );
+        if(retVal){
+          uartWriteString( UART_USB, espResponseBuffer );
+          esp01CleanRxBuffer();
+          uartWriteString( UART_232, "Se lleno el recipiente de agua\r\n" );   
+          }
         bombaPrendida = 0;
       }
       showDateAndTime( &rtc );
